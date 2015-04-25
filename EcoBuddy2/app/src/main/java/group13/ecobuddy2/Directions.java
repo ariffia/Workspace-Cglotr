@@ -1,5 +1,6 @@
 package group13.ecobuddy2;
 
+import android.location.Location;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -51,6 +52,9 @@ public class Directions
 
     // * List of steps to do the journey
     public ArrayList<Step> steps;
+
+    // Current step
+    int currentStep;
 
     /**
      * Directions
@@ -297,6 +301,13 @@ public class Directions
 
         // Iterating through the whole steps and extract the data we want
         retLatLngArrayList = new ArrayList<LatLng>();
+
+        // * Check if empty and return
+        if(steps == null) {
+            return retLatLngArrayList;
+        }
+
+        // * Go on if not empty
         stepIterator = steps.iterator();
         while(stepIterator.hasNext()) {
             polylineLatLngIterator = stepIterator.next().polylinePoints.iterator();
@@ -307,5 +318,44 @@ public class Directions
 
         // Yay, return the aggregate
         return retLatLngArrayList;
+    }
+
+    /**
+     * Get the current step that the car is in
+     * - Return the longest step match
+     * - Return null if there is no match
+     * @param carLocation
+     */
+    public Step getNextStep(Location carLocation) {
+        Iterator<Step> iterator;
+        Step tmp;
+        Step returnCandidate;
+        Boolean in;
+
+        // Initial is null
+        returnCandidate = null;
+
+        // Iterate through the steps and find match if any
+
+        // * Check if empty
+        if(steps.size() <= 0) {
+            return null;
+        }
+
+        // * Else, iterate through
+        // - The instruction for the current step is contained in the next step
+        for(int i = 0; i < steps.size() - 1; i++) {
+            tmp = steps.get(i);
+            in = com.google.maps.android.PolyUtil.isLocationOnPath(
+                    Utility.latLngFromLocation(carLocation),
+                    tmp.polylinePoints,
+                    false,  // Geodesic stuff
+                    50.0  // Match radius in meters
+            );
+            if(in) {
+                returnCandidate = steps.get(i + 1);
+            }
+        }
+        return returnCandidate;
     }
 }

@@ -17,17 +17,6 @@ public class JSONParser {
     private final String OWM_PREDICTIONS = "predictions";
     private final String OWM_LOCATION_DESCRIPTION = "description";
 
-    // JSON objects for charging locations
-    private final String OWM_ID = "ID";
-    private final String OWM_UUID = "UUID";
-    private final String OWM_ADDRESS_INFO = "AddressInfo";
-    private final String OWM_ADDRESS = "AddressLine1";
-    private final String OWM_TOWN = "Town";
-    private final String OWM_STATEORPROVINCE = "StateOrProvince";
-    private final String OWM_LATITUDE = "Latitude";
-    private final String OWM_LONGITUDE = "Longitude";
-    private final String OWM_CONTACTNUM = "ContactTelephone1";
-
     /**
      * Parse the dropdown locations
      * @param jQueries

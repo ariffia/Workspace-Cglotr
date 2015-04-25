@@ -57,4 +57,24 @@ public class Utility {
 
         return sb.toString();
     }
+
+    /**
+     * Convert Location to LatLng
+     * @param location
+     * @return
+     */
+    public static LatLng latLngFromLocation(Location location) {
+        LatLng latLng;
+
+        latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        return latLng;
+    }
+
+    public static Location latLngToLocation(LatLng latLng) {
+        Location tmp;
+        tmp = Car.mCurrentLocation;
+        tmp.setLatitude(latLng.latitude);
+        tmp.setLongitude(latLng.longitude);
+        return new Location(tmp);
+    }
 }

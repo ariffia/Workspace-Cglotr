@@ -1,29 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/navigation"
+
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     >
 
-    <AutoCompleteTextView
-        android:id="@+id/autoCompleteSearch"
+    <AutoCompleteTextView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/searchBox"
+
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="invisible"
-        android:text=""
-        android:lines="1"
-        android:singleLine="true"
+
         android:layout_alignParentTop="true"
-        android:layout_toRightOf="@+id/searchIcon"
-        android:layout_toEndOf="@+id/searchIcon"
+        android:layout_toRightOf="@+id/mapIcon"
+        android:layout_toEndOf="@+id/mapIcon"
         />
 
     <ImageButton
-        android:id="@+id/searchIcon"
-        android:src="@drawable/abc_ic_search_api_mtrl_alpha"
+        android:id="@+id/mapIcon"
+
+        android:src="@drawable/globe50"
+        android:scaleX="0.5"
+        android:scaleY="0.5"
+
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         />
+
+    <Switch
+        android:id="@+id/modeSwitch"
+
+        android:text="Tracking"
+
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        />
+
+    <RelativeLayout
+        android:id="@+id/rerouting"
+
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        >
+
+        <Button
+            android:id="@+id/add"
+
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:text="+"
+
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            />
+
+        <Button
+            android:id="@+id/reset"
+
+            android:text="R"
+
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:layout_below="@+id/add"
+            android:layout_alignParentRight="true"
+            />
+
+    </RelativeLayout>
 
 </RelativeLayout>

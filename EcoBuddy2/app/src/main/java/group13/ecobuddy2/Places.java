@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 /**
- * Places 13-04-2015
+ * Places 14-04-2015
  * - Built for EcoBuddy's places needs
  */
 public class Places {
@@ -41,7 +41,7 @@ public class Places {
      * Places Object Oriented
      * - Uses Google Places API to get information about places
      */
-    public Places(Location location, Integer radiusInMeters, String query, String key) {
+    public Places(Location location, Double radiusInMeters, String query, String key) {
         StringBuilder stringBuilder;
 
         stringBuilder = new StringBuilder();
@@ -155,7 +155,7 @@ public class Places {
      * Connect
      * - Connect to the server and get the json
      */
-    public boolean connect() throws IOException, JSONException {
+    public void connect() {
         HttpClient httpClient;
         HttpGet httpGet;
         HttpResponse httpResponse;
@@ -167,22 +167,25 @@ public class Places {
         // Set up the http get request
         httpGet = new HttpGet(request);
 
-        // Catch the response
-        httpResponse = httpClient.execute(httpGet);
+        // Extract the data
         byteArrayOutputStream = new ByteArrayOutputStream();
-        if(httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+        try {
+
+            // * Catch the response
+            httpResponse = httpClient.execute(httpGet);
             httpResponse.getEntity().writeTo(byteArrayOutputStream);
-        } else {
-            return false;
+
+            // * Make the json object
+            sourceJson = new JSONObject(byteArrayOutputStream.toString());
+
+            // * Now, get the data and store them in the place array list
+            extractData();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
-
-        // Make the json object
-        sourceJson = new JSONObject(byteArrayOutputStream.toString());
-
-        // Now, get the data and store them in the place array list
-        extractData();
-
-        return true;
     }
 
     /**

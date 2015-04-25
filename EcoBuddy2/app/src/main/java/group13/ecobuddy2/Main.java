@@ -13,10 +13,6 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 
-import org.json.JSONException;
-
-import java.io.IOException;
-
 /**
  * Created by ariffia@mcmaster.ca on 2015-04-11.
  */
@@ -61,7 +57,19 @@ public class Main extends Activity implements
         // - This will provide us with GPS capability and other stuff as well for location
         //   purposes
         // - Build google api client needs to be called in onCreate()
+        // - Remember to connect this during on start!
         buildGoogleApiClient();
+
+        // Install TTS
+        Voice.installTTS();
+    }
+
+    /**
+     * Called after the activity has been stopped, just prior to it being started again
+     */
+    @Override
+    protected void onRestart() {
+        super.onRestart();
     }
 
     /**
@@ -72,22 +80,12 @@ public class Main extends Activity implements
         super.onStart();
 
         // Connect google api client
+        // - Needs to be done here (specified in the documentation)
         mGoogleApiClient.connect();
 
         // Install user navigation
-        // - This is the UI layer and it should be on top of the map
-
-        // * Inflate the navigation layer
-        Navigation.inflateNavLayer(this);
-
-        // * Install the search icon on click
-        Navigation.installSearchIconOnClick(R.id.searchIcon);
-
-        // * Set the search box
-        Navigation.setSearchBox(R.id.autoCompleteSearch);
-
-        // * Set up the keyboard
-        Navigation.setupKeyboard();
+        // - All in on user navigation setup
+        UserNavigation.installUserNavigation();
     }
 
     /**
@@ -95,6 +93,7 @@ public class Main extends Activity implements
      */
     @Override
     protected void onStop() {
+        super.onStop();
 
         // The client needs to be disconnected here
         mGoogleApiClient.disconnect();
@@ -106,6 +105,22 @@ public class Main extends Activity implements
     @Override
     protected void onResume() {
         super.onResume();
+    }
+
+    /**
+     * Called when the system is about to start resuming another activity
+     */
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    /**
+     * Called before the activity is destroyed
+     */
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
     }
 
     /**
@@ -136,41 +151,7 @@ public class Main extends Activity implements
         setUpLocationRequest();
 
         // Install auto complete search bar
-        DestinationSearch.installAutoCompleteSearch(this, R.id.autoCompleteSearch);
-
-        // TEST
-        // Places test
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Places places;
-
-                places = new Places(
-                        Car.mCurrentLocation,
-                        100000,
-                        Places.CHARGE_POINT,
-                        Utility.getDevKey()
-                );
-                try {
-                    places.connect();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                Log.d("PLACES", places.request);
-
-                // * Lets print all of the places we have
-                for(int i = 0; i < places.placeArrayList.size(); i++) {
-                    Log.d("PLACE", places.placeArrayList.get(i).name);
-                    Log.d("PLACE", places.placeArrayList.get(i).vicinity);
-                    Log.d("PLACE", Utility.latLngToString(places.placeArrayList.get(i).latLng));
-                }
-
-                // Draw the places on the map
-                new GMap.DrawPlacesTask().execute(places);
-            }
-        }).start();
+        DestinationSearch.installAutoCompleteSearch(this, R.id.searchBox);
     }
 
     /**
@@ -190,7 +171,16 @@ public class Main extends Activity implements
     public void onLocationChanged(Location location) {
 
         // Update the car's location in Car class
-        Car.mCurrentLocation = location;
+        Car.carUpdate(location);
+
+        // Car tracking
+        UserNavigation.carTracking(UserNavigation.getTrackingSwitchMode());
+
+        // Directions instruction
+        UserNavigation.directionsWhatToDoToast(
+                UserNavigation.getTrackingSwitchMode(),
+                new Long(10000)  // Give an instruction every 10 seconds
+        );
     }
 
     /**
@@ -217,7 +207,7 @@ public class Main extends Activity implements
      * Set Up Location Request
      */
     public void setUpLocationRequest() {
-        LocationRequest mLocationRequest;  // The request itself
+        LocationRequest mLocationRequest;
 
         // Now make the request
         mLocationRequest = new LocationRequest();
@@ -233,16 +223,9 @@ public class Main extends Activity implements
         );
 
         // Get the initial location
-        Car.mCurrentLocation =
-                LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-    }
-
-    /**
-     * Someone will want to use this, so here it is
-     * @return
-     */
-    public static Main getMe() {
-        return me;
+        Location initialLocation;
+        initialLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        Car.carUpdate(initialLocation);
     }
 }
 

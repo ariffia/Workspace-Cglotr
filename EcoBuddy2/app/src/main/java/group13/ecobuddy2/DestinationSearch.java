@@ -69,7 +69,7 @@ public class DestinationSearch {
             final View rowView = convertView;
 
             try {
-                Main.getMe().runOnUiThread(new Runnable() {
+                Main.me.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         TextView destinationLocation = (TextView) rowView.findViewById(R.id.search_item_destination);
@@ -115,7 +115,7 @@ public class DestinationSearch {
 
                 @Override
                 protected void publishResults(final CharSequence constraint, final FilterResults results) {
-                    Main.getMe().runOnUiThread(new Runnable() {
+                    Main.me.runOnUiThread(new Runnable() {
                         public void run() {
                             if (results != null && results.count > 0) {
                                 notifyDataSetChanged();
