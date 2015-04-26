@@ -6,7 +6,6 @@ import android.util.Log;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -27,6 +26,7 @@ public class Places {
     // Queries
     public static final String GAS_STATION = "gas station";
     public static final String CHARGE_POINT = "charge point charging station";
+    public static final String CHARGING_STATIONS = "charging station";
 
     // Source json where everything comes from
     public JSONObject sourceJson;

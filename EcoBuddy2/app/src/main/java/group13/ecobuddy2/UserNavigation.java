@@ -55,6 +55,7 @@ public class UserNavigation
      */
     public static Button addStation;
     public static Button resetStation;
+    public static Button showAllCharging;
 
     /**
      * All in one user navigation installation
@@ -119,18 +120,23 @@ public class UserNavigation
         switch (googleMap.getMapType()) {
             case GoogleMap.MAP_TYPE_HYBRID:
                 googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                makeALongToast("Switched to normal map type");
                 break;
             case GoogleMap.MAP_TYPE_NORMAL:
                 googleMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+                makeALongToast("Switched to satellite map type");
                 break;
             case GoogleMap.MAP_TYPE_SATELLITE:
                 googleMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+                makeALongToast("Switched to terrain map type");
                 break;
             case GoogleMap.MAP_TYPE_TERRAIN:
                 googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+                makeALongToast("Switched to hybrid map type");
                 break;
             default:
                 googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+                makeALongToast("Switched to hybrid map type");
                 break;
         }
 
@@ -218,6 +224,7 @@ public class UserNavigation
         // Get the views
         addStation = (Button) Main.me.findViewById(R.id.add);
         resetStation = (Button) Main.me.findViewById(R.id.reset);
+        showAllCharging = (Button) Main.me.findViewById(R.id.showAllCharging);
 
         // Set add station on click listener
         addStation.setOnClickListener(new View.OnClickListener() {
@@ -232,6 +239,14 @@ public class UserNavigation
             @Override
             public void onClick(View v) {
                 onClickReset();
+            }
+        });
+
+        // Set the show all charging stations button listener
+        showAllCharging.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onClickChargingStationsAlongTheRoute();
             }
         });
 
@@ -309,7 +324,7 @@ public class UserNavigation
         new GMap.DrawChargePlacesTask().execute(mChargePlaces);
 
         // Draw the car range from the marker
-        GMap.DrawCarRange(
+        GMap.drawCarRange(
                 stopMarker.position,
                 Car.getMaxRangeInMeters(),
                 Color.BLUE
@@ -330,9 +345,13 @@ public class UserNavigation
 
         // Check if null
         if(stopMarkers == null) {
+            makeALongToast("Added locations cleared");
+
             return;
         }
         if(mDestination == null) {
+            makeALongToast("No directions");
+
             return;
         }
 
@@ -344,6 +363,67 @@ public class UserNavigation
 
         // Make a toast
         makeALongToast("Added locations cleared");
+    }
+
+    /**
+     * Draw the charging stations along the entire route
+     */
+    public static void onClickChargingStationsAlongTheRoute() {
+
+        // Redundant error handling
+        if(mMultiDirections == null) {
+            makeALongToast("No directions");
+
+            return;
+        }
+
+        // If multi directions object is not null then OK
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Iterator<Directions> multiDirectionsIterator;
+                Iterator<Directions.Step> stepIterator;
+                Directions tmpDirections;
+                Directions.Step tmpStep;
+                Places tmpPlaces;
+                LatLng tmpMidLatLng;
+
+                // Check for null
+                if(mMultiDirections == null) {
+                    return;
+                }
+
+                // Iterate through the multi directions object
+                // - The multi directions object should already be connected
+                multiDirectionsIterator = mMultiDirections.multiDirections.iterator();
+                while(multiDirectionsIterator.hasNext()) {
+                    tmpDirections = multiDirectionsIterator.next();
+
+                    // * Iterate through the steps from each directions object
+                    stepIterator = tmpDirections.steps.iterator();
+                    while(stepIterator.hasNext()) {
+                        tmpStep = stepIterator.next();
+                        tmpMidLatLng = Utility.midPoint(
+                                tmpStep.startLocation,
+                                tmpStep.endLocation
+                        );
+
+                        // * * Make the API call and the the charging stations around the
+                        //     mid point
+                        tmpPlaces = new Places(
+                                Utility.latLngToLocation(tmpMidLatLng),
+                                1000.0,  // Search range in meters
+                                Places.CHARGING_STATIONS,
+                                Utility.getDevKey()
+                        );
+                        tmpPlaces.connect();
+
+                        // * * Draw the charging stations
+                        new GMap.DrawChargePlacesTask().execute(tmpPlaces);
+                    }
+                }
+            }
+        }).start();
     }
 
     /**
@@ -473,7 +553,7 @@ public class UserNavigation
         new GMap.DrawChargePlacesTask().execute(mChargePlaces);
 
         // Draw the car range
-        GMap.DrawCarRange(
+        GMap.drawCarRange(
                 Utility.latLngFromLocation(Car.mCurrentLocation),
                 Car.getPossibleRangeInMeters(),
                 Color.GREEN

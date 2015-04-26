@@ -2,6 +2,8 @@ package group13.ecobuddy2;
 
 import android.location.Location;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -110,5 +112,18 @@ public class MultiDirections {
             }
         }
         return returnCandidate;
+    }
+
+    /**
+     * Get the last directions
+     * - This is to get the end destination
+     * @return
+     */
+    public Directions getLastDirections() {
+        Directions lastDirections;
+
+        // Get the last directions
+        lastDirections = multiDirections.get(multiDirections.size() - 1);
+        return lastDirections;
     }
 }

@@ -21,8 +21,8 @@
         android:id="@+id/mapIcon"
 
         android:src="@drawable/globe50"
-        android:scaleX="0.5"
-        android:scaleY="0.5"
+        android:scaleX="0.7"
+        android:scaleY="0.7"
 
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -68,12 +68,25 @@
         <Button
             android:id="@+id/reset"
 
-            android:text="R"
+            android:text="C"
 
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
 
             android:layout_below="@+id/add"
+            android:layout_alignParentRight="true"
+            />
+
+        <Button
+            android:id="@+id/showAllCharging"
+
+            android:text="S"
+
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+
+            android:layout_below="@+id/reset"
             android:layout_alignParentRight="true"
             />
 

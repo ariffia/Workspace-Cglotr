@@ -70,11 +70,36 @@ public class Utility {
         return latLng;
     }
 
+    /**
+     * Convert lat lng to location
+     * @param latLng
+     * @return
+     */
     public static Location latLngToLocation(LatLng latLng) {
         Location tmp;
         tmp = Car.mCurrentLocation;
         tmp.setLatitude(latLng.latitude);
         tmp.setLongitude(latLng.longitude);
         return new Location(tmp);
+    }
+
+    /**
+     * Find midpoint of the start/end destination
+     * @param startCoords
+     * @param endCoords
+     * @return
+     */
+    public static LatLng midPoint(LatLng startCoords, LatLng endCoords) {
+        double dLon = Math.toRadians(endCoords.longitude - startCoords.longitude);
+        double Bx = Math.cos(Math.toRadians(endCoords.latitude)) * Math.cos(dLon);
+        double By = Math.cos(Math.toRadians(endCoords.latitude)) * Math.sin(dLon);
+
+        Double latitude = Math.toDegrees(Math.atan2(
+                Math.sin(Math.toRadians(startCoords.latitude)) + Math.sin(Math.toRadians(endCoords.latitude)),
+                Math.sqrt((Math.cos(Math.toRadians(startCoords.latitude)) + Bx) * (Math.cos(Math.toRadians(startCoords.latitude)) + Bx) + By * By)));
+
+        Double longitude = startCoords.longitude + Math.toDegrees(Math.atan2(By, Math.cos(Math.toRadians(startCoords.latitude)) + Bx));
+
+        return new LatLng(latitude, longitude);
     }
 }

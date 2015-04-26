@@ -81,6 +81,7 @@ public class GMap
 
     /**
      * Setup what happens if a marker is clicked
+     * - Update the currently clicked marker
      */
     public static void setupMarkerOnClickListener() {
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
@@ -88,12 +89,7 @@ public class GMap
             public boolean onMarkerClick(Marker marker) {
                 mCurrentClickedMarker = marker;
 
-                // Draw the max car range from here
-
-                // Find new gas stations nearby this marker
-
-                // Find new charging stations nearby this marker
-
+                // This needs to be false so that the default calls will be triggered
                 return false;
             }
         });
@@ -101,12 +97,13 @@ public class GMap
 
     /**
      * Draw directions route task
-     * - Draws detailed route on the map (snaps to the road)
+     * - Draws detailed route on the map
      */
     public static class DrawRouteTask extends AsyncTask<Directions, Void, Directions> {
 
         /**
          * Takes directions and return the polyline to draw
+         * - Connect the object as well
          * @param directions
          * @return
          */
@@ -116,6 +113,11 @@ public class GMap
             return directions[0];
         }
 
+        /**
+         * Actually drawing the route
+         * - Check for nulls
+         * @param directions
+         */
         @Override
         protected void onPostExecute(Directions directions) {
             ArrayList<LatLng> points;
@@ -128,8 +130,11 @@ public class GMap
             // Drawing the route
             PolylineOptions routeOptions = new PolylineOptions();
 
-            // * Set the route options
+            // * Get the polyline
             points = directions.getAllPolylinePointsFromSteps();
+
+            // * Set the route options
+            routeOptions.geodesic(true);
             routeOptions.addAll(points);
             routeOptions.color(Color.CYAN);
 
@@ -144,36 +149,57 @@ public class GMap
      */
     public static class DrawMultiRouteTask extends AsyncTask<MultiDirections, Void, MultiDirections> {
 
-        private String LOG_TAG = DrawRouteTask.class.getSimpleName();
-
+        /**
+         * Pass the multi directions object to the on post execute
+         * @param args
+         * @return
+         */
         @Override
         protected MultiDirections doInBackground(MultiDirections... args) {
             args[0].connect();
             return args[0];
         }
 
+        /**
+         * Actually drawing the polyline
+         * @param multiDirections
+         */
         @Override
         protected void onPostExecute(MultiDirections multiDirections) {
 
             // Return if multi directions is empty
+            // - Important for error handling
             if(multiDirections.multiDirections.size() <= 0) {
                 return;
             }
 
+            // Draw the start and end markers
+            drawStartAndEnd(
+                    Utility.latLngFromLocation(Car.mCurrentLocation),  // Start lat lng
+                    multiDirections.getLastDirections().endLocation  // End lat lng
+            );
+
             // Draw the routes
+            PolylineOptions routeOptions;
+            Iterator<Directions> iterator;
+            ArrayList<LatLng> multiRoutes;
 
             // * Combine all the polyline points
-            PolylineOptions routeOptions = new PolylineOptions();
-            Iterator<Directions> iterator = multiDirections.multiDirections.iterator();
-            ArrayList<LatLng> multiRoutes = new ArrayList<LatLng>();
-
+            iterator = multiDirections.multiDirections.iterator();
+            multiRoutes = new ArrayList<>();
             while(iterator.hasNext()) {
                 multiRoutes.addAll(iterator.next().getAllPolylinePointsFromSteps());
             }
 
-            // * Actually draw it in the map
+            // * Specify the route options
+            routeOptions = new PolylineOptions();
+            routeOptions.geodesic(true);
+            routeOptions.color(Color.BLUE);
+
+            // * * Add the polyline
             routeOptions.addAll(multiRoutes);
-            routeOptions.color(Color.RED);
+
+            // * Actually draw it in the map
             GMap.mMap.addPolyline(routeOptions);
         }
     }
@@ -184,14 +210,21 @@ public class GMap
      */
     public static class DrawGasPlacesTask extends AsyncTask<Places, Void, ArrayList<Places.Place>> {
 
-        // Process the places object
+        /**
+         * Process the places object
+         * @param places
+         * @return
+         */
         @Override
         protected ArrayList<Places.Place> doInBackground(Places... places) {
             places[0].connect();
             return places[0].placeArrayList;
         }
 
-        // Draw them places
+        /**
+         * Draw them places
+         * @param placeArrayList
+         */
         @Override
         protected void onPostExecute(ArrayList<Places.Place> placeArrayList) {
             MarkerOptions markerOptions;
@@ -213,7 +246,7 @@ public class GMap
                 // *  * Set the marker options
                 markerOptions = new MarkerOptions();
                 markerOptions.icon(
-                        BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
+                        BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
                 markerOptions.title(place.name);
                 markerOptions.snippet(place.vicinity);
                 markerOptions.position(place.latLng);
@@ -230,14 +263,21 @@ public class GMap
      */
     public static class DrawChargePlacesTask extends AsyncTask<Places, Void, ArrayList<Places.Place>> {
 
-        // Process the places object
+        /**
+         * Process the places object
+         * @param places
+         * @return
+         */
         @Override
         protected ArrayList<Places.Place> doInBackground(Places... places) {
             places[0].connect();
             return places[0].placeArrayList;
         }
 
-        // Draw them places
+        /**
+         * Draw them places
+         * @param placeArrayList
+         */
         @Override
         protected void onPostExecute(ArrayList<Places.Place> placeArrayList) {
             MarkerOptions markerOptions;
@@ -259,7 +299,7 @@ public class GMap
                 // *  * Set the marker options
                 markerOptions = new MarkerOptions();
                 markerOptions.icon(
-                        BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
+                        BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
                 );
                 markerOptions.title(place.name);
                 markerOptions.snippet(place.vicinity);
@@ -322,9 +362,37 @@ public class GMap
     }
 
     /**
+     * Draw the start and end marker
+     * @param start
+     * @param end
+     */
+    public static void drawStartAndEnd(LatLng start, LatLng end) {
+        MarkerOptions startOptions;
+        MarkerOptions endOptions;
+
+        // Set the marker options for the start marker
+        startOptions = new MarkerOptions();
+        startOptions.icon(
+                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
+        );
+        startOptions.position(start);
+
+        // Set the marker options for the end marker
+        endOptions = new MarkerOptions();
+        endOptions.icon(
+                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
+        );
+        endOptions.position(end);
+
+        // Draw both of them
+        GMap.mMap.addMarker(startOptions);
+        GMap.mMap.addMarker(endOptions);
+    }
+
+    /**
      * Show how far the car can go on the map
      */
-    public static void DrawCarRange(LatLng center,
+    public static void drawCarRange(LatLng center,
                                     Double radiusInMeters,
                                     int color)
     {
@@ -334,9 +402,53 @@ public class GMap
         circleOptions.center(center);
         circleOptions.radius(radiusInMeters);
         circleOptions.strokeColor(color);
-        circleOptions.strokeWidth((float) 2.5);
+        circleOptions.strokeWidth((float) 0.0);
         circleOptions.fillColor(0x1000ff00);
 
         GMap.mMap.addCircle(circleOptions);
+    }
+
+    /**
+     * Pass a multi directions object and this async task will draw the markers
+     */
+    public static class DrawChargingMarkersTask
+        extends AsyncTask<MultiDirections, Void, LatLng>
+    {
+        /**
+         * We might not need this class
+         * @param params
+         * @return
+         */
+        @Override
+        protected LatLng doInBackground(MultiDirections... params) {
+            Iterator<Directions> multiDirectionsIterator;
+            Directions tmpDirections;
+            Places tmpPlaces;
+
+            // Check for null
+            if(params[0] == null) {
+                return null;
+            }
+
+            // Iterate through the multi directions object
+            // - The multi directions object should already be connected
+            multiDirectionsIterator = params[0].multiDirections.iterator();
+            while(multiDirectionsIterator.hasNext()) {
+                tmpDirections = multiDirectionsIterator.next();
+
+                // * Get the charging stations around the end of the directions object's end
+                tmpPlaces = new Places(
+                        Utility.latLngToLocation(tmpDirections.endLocation),
+                        Car.getMaxRangeInMeters(),
+                        Places.CHARGE_POINT,
+                        Utility.getDevKey()
+                        );
+                tmpPlaces.connect();
+
+                // * Iterate through places object to get individual place
+            }
+
+            return null;
+        }
     }
 }
