@@ -377,6 +377,10 @@ public class UserNavigation
             makeALongToast("Cleaning up...");
             return;
         }
+        if(stopMarkers.isEmpty()) {
+            makeALongToast("Cleaning up...");
+            return;
+        }
 
         // Clear the map
         GMap.mMap.clear();

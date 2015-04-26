@@ -27,7 +27,7 @@
 
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        
+
         android:layout_alignBottom="@+id/searchBox"
         />
 
@@ -40,10 +40,9 @@
         android:layout_height="wrap_content"
 
         android:paddingLeft="15px"
-        android:paddingRight="15px"
 
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
+        android:layout_alignParentRight="true"
         />
 
     <RelativeLayout
