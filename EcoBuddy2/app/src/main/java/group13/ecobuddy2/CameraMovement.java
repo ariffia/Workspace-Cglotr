@@ -21,8 +21,8 @@ public class CameraMovement
     public static void makeTheCameraFollowTheCar(Location carLocation) {
         followCarCameraPosition = new CameraPosition(
                 Utility.latLngFromLocation(carLocation),
-                (float) 14.0,
-                (float) 45.0,
+                (float) 17.0,
+                (float) 70.0,
                 carLocation.getBearing()
         );
         followCarCameraUpdate = CameraUpdateFactory.newCameraPosition(followCarCameraPosition);
@@ -36,7 +36,7 @@ public class CameraMovement
     public static void normalCameraMovement(Location carLocation) {
         followCarCameraPosition = new CameraPosition(
                 Utility.latLngFromLocation(carLocation),
-                (float) 5.0,
+                (float) 10.0,
                 (float) 0.0,
                 carLocation.getBearing()
         );

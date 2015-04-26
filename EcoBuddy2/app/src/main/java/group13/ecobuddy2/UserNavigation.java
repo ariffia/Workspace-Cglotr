@@ -32,11 +32,17 @@ public class UserNavigation
      */
     public static String mDestination;
     public static MultiDirections mMultiDirections;
-    public static Places mGasPlaces;
-    public static Places mChargePlaces;
+//    public static Places mGasPlaces;
+//    public static Places mChargePlaces;
+    public static ArrayList<Places> mGasPlacesList;
+    public static ArrayList<Places> mChargePlacesList;
+
+    // Along route search distance
+    public static final Double GAS_ALONG_SEARCH_RANGE = 2500.0;
+    public static final Double CHARGE_ALONG_SEARCH_RANGE = 10000.0;
 
     // Search icon
-    public static ImageButton searchIcon;
+    public static ImageButton mapButton;
 
     // Search box
     public static AutoCompleteTextView searchBox;
@@ -53,9 +59,12 @@ public class UserNavigation
     /**
      * Rerouting buttons
      */
-    public static Button addStation;
-    public static Button resetStation;
-    public static Button showAllCharging;
+    public static Button addButton;
+    public static Button clearButton;
+    public static Button resetButton;
+
+    // Coloring
+    public static final int TRANS_WHITE = 0x90ffffff;
 
     /**
      * All in one user navigation installation
@@ -78,6 +87,7 @@ public class UserNavigation
         // Install tracking switch
         timer = Calendar.getInstance().getTimeInMillis();
         trackingSwitch = (Switch) Main.me.findViewById(R.id.modeSwitch);
+        trackingSwitch.setBackgroundColor(TRANS_WHITE);
         isNormal = false;
     }
 
@@ -101,8 +111,9 @@ public class UserNavigation
      * @param id
      */
     public static void installMapIconOnClick(int id) {
-        searchIcon = (ImageButton) Main.me.findViewById(id);
-        searchIcon.setOnClickListener(new View.OnClickListener() {
+        mapButton = (ImageButton) Main.me.findViewById(id);
+        mapButton.setBackgroundColor(TRANS_WHITE);
+        mapButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 switchMapType(GMap.mMap);
@@ -111,12 +122,11 @@ public class UserNavigation
     }
 
     /**
-     * Toggle the visibility of the search box
-     * - Also pulls up/down the keyboard
+     * Switch the map type
      */
     public static boolean switchMapType(GoogleMap googleMap) {
 
-        // Switch the map type
+        // Cycle the map type
         switch (googleMap.getMapType()) {
             case GoogleMap.MAP_TYPE_HYBRID:
                 googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
@@ -152,6 +162,7 @@ public class UserNavigation
 
         // Get the search box
         searchBox = (AutoCompleteTextView) Main.me.findViewById(R.id.searchBox);
+        searchBox.setBackgroundColor(TRANS_WHITE);
 
         // Set the search box properties
         searchBox.setText("");
@@ -182,6 +193,12 @@ public class UserNavigation
 
                 // Clear the search box
                 searchBox.setText("");
+
+                /**
+                 * Get all the gas and charging stations along the route
+                 * - Preload the locations as well
+                 */
+                getStationsAlongTheRoute();
 
                 return true;
             }
@@ -222,33 +239,38 @@ public class UserNavigation
     public static void installRerouting() {
 
         // Get the views
-        addStation = (Button) Main.me.findViewById(R.id.add);
-        resetStation = (Button) Main.me.findViewById(R.id.reset);
-        showAllCharging = (Button) Main.me.findViewById(R.id.showAllCharging);
+        addButton = (Button) Main.me.findViewById(R.id.add);
+        clearButton = (Button) Main.me.findViewById(R.id.clear);
+        resetButton = (Button) Main.me.findViewById(R.id.reset);
 
         // Set add station on click listener
-        addStation.setOnClickListener(new View.OnClickListener() {
+        addButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onClickAddAStation(v);
+                onClickAddAButton(v);
             }
         });
 
         // Set reset station on click listener
-        resetStation.setOnClickListener(new View.OnClickListener() {
+        clearButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onClickReset();
+                onClickClearButton();
             }
         });
 
         // Set the show all charging stations button listener
-        showAllCharging.setOnClickListener(new View.OnClickListener() {
+        resetButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onClickChargingStationsAlongTheRoute();
+                onClickResetButton();
             }
         });
+
+        // Set the background color
+        addButton.setBackgroundColor(TRANS_WHITE);
+        clearButton.setBackgroundColor(TRANS_WHITE);
+        resetButton.setBackgroundColor(TRANS_WHITE);
 
         // Initiate the stop markers
         stopMarkers = new ArrayList<StopMarker>();
@@ -260,13 +282,16 @@ public class UserNavigation
      * - Redraw the map every time a marker (station) is added
      * @param view
      */
-    public static void onClickAddAStation(View view) {
+    public static void onClickAddAButton(View view) {
 
         // Check if the marker is not null
         if(GMap.mCurrentClickedMarker == null) {
-            makeALongToast("Select a location first");
+            makeALongToast("Nothing to add");
             return;
         }
+
+        // Redraw the gas/charge locations
+        getStationsAlongTheRouteUsingPreloaded();
 
         // Else, go on
         Marker tmp;
@@ -308,74 +333,110 @@ public class UserNavigation
         new GMap.DrawMultiRouteTask().execute(mMultiDirections);
 
         // Get the nearby gas stations and draw
-        mGasPlaces = new Places(Utility.latLngToLocation(stopMarker.position),
-                Car.getMaxRangeInMeters(),
-                Places.GAS_STATION,
-                Utility.getDevKey()
-        );
-        new GMap.DrawGasPlacesTask().execute(mGasPlaces);
+//        mGasPlaces = new Places(Utility.latLngToLocation(stopMarker.position),
+//                Car.getMaxRangeInMeters(),
+//                Places.GAS_STATION,
+//                Utility.getDevKey()
+//        );
+//        new GMap.DrawGasPlacesTask().execute(mGasPlaces);
 
         // Get the nearby charging station and draw
-        mChargePlaces = new Places(Utility.latLngToLocation(stopMarker.position),
-                Car.getMaxRangeInMeters(),
-                Places.CHARGE_POINT,
-                Utility.getDevKey()
-        );
-        new GMap.DrawChargePlacesTask().execute(mChargePlaces);
+//        mChargePlaces = new Places(Utility.latLngToLocation(stopMarker.position),
+//                Car.getMaxRangeInMeters(),
+//                Places.CHARGE_POINT,
+//                Utility.getDevKey()
+//        );
+//        new GMap.DrawChargePlacesTask().execute(mChargePlaces);
 
         // Draw the car range from the marker
-        GMap.drawCarRange(
-                stopMarker.position,
-                Car.getMaxRangeInMeters(),
-                Color.BLUE
-        );
+//        GMap.drawCarRange(
+//                stopMarker.position,
+//                Car.getMaxRangeInMeters(),
+//                Color.BLUE
+//        );
 
         // Draw the markers
         // - Indicate the stops
         new GMap.DrawStopMarkers().execute(stopMarkers);
 
         // Make a toast
-        makeALongToast("Added " + stopMarker.snippet);
+        makeALongToast("Adding \"" + stopMarker.snippet + "\" to the route. Please wait...");
     }
 
     /**
      * Clear out the added stations
      */
-    public static void onClickReset() {
+    public static void onClickClearButton() {
 
         // Check if null
         if(stopMarkers == null) {
-            makeALongToast("Added locations cleared");
-
+            makeALongToast("Cleaning up...");
             return;
         }
         if(mDestination == null) {
-            makeALongToast("No directions");
-
+            makeALongToast("Cleaning up...");
             return;
         }
 
-        // Clear the list
-        stopMarkers.clear();
+        // Clear the map
+        GMap.mMap.clear();
+
+        // Recalculate multi directions
+
+        // * Iterate through and add all of them
+//        Iterator<StopMarker> iterator;
+//        StopMarker tmpStopMarker;
+//        iterator = stopMarkers.iterator();
+//        while(iterator.hasNext()) {
+//            tmpStopMarker = iterator.next();
+//            mMultiDirections.addAStop(Utility.latLngToString(tmpStopMarker.position));
+//        }
+        new GMap.DrawMultiRouteTask().execute(mMultiDirections);
+
+        // Draw the markers
+        // - Indicate the stops
+        new GMap.DrawStopMarkers().execute(stopMarkers);
+
+        // Make a toast
+        makeALongToast("Cleaning up...");
+    }
+
+    /**
+     * Reset the route thingy
+     */
+    public static void onClickResetButton() {
+
+        // Null handling
+        if(stopMarkers == null) {
+            makeALongToast("Resetting directions...");
+            return;
+        }
+        if(mDestination == null) {
+            makeALongToast("Resetting directions...");
+            return;
+        }
 
         // Draw the vanilla directions
         vanillaDirections(mDestination);
 
+        // Redraw the gas/charge locations
+        getStationsAlongTheRouteUsingPreloaded();
+
+        // Clear the list
+        stopMarkers.clear();
+
         // Make a toast
-        makeALongToast("Added locations cleared");
+        makeALongToast("Resetting directions...");
     }
 
     /**
      * Draw the charging stations along the entire route
      */
-    public static void onClickChargingStationsAlongTheRoute() {
+    public static void getStationsAlongTheRoute() {
 
-        // Redundant error handling
-        if(mMultiDirections == null) {
-            makeALongToast("No directions");
-
-            return;
-        }
+        // Initiate the variables
+        mGasPlacesList = new ArrayList<>();
+        mChargePlacesList = new ArrayList<>();
 
         // If multi directions object is not null then OK
         new Thread(new Runnable() {
@@ -385,12 +446,20 @@ public class UserNavigation
                 Iterator<Directions.Step> stepIterator;
                 Directions tmpDirections;
                 Directions.Step tmpStep;
-                Places tmpPlaces;
+                Places tmpGasPlaces;
+                Places tmpChargePlaces;
                 LatLng tmpMidLatLng;
+
+                // Wait for multi directions to finish
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
 
                 // Check for null
                 if(mMultiDirections == null) {
-                    return;
+                    getStationsAlongTheRoute();
                 }
 
                 // Iterate through the multi directions object
@@ -410,17 +479,73 @@ public class UserNavigation
 
                         // * * Make the API call and the the charging stations around the
                         //     mid point
-                        tmpPlaces = new Places(
+                        tmpGasPlaces = new Places(
                                 Utility.latLngToLocation(tmpMidLatLng),
-                                1000.0,  // Search range in meters
+                                GAS_ALONG_SEARCH_RANGE,  // Search range in meters
+                                Places.GAS_STATION,
+                                Utility.getDevKey()
+                        );
+                        tmpGasPlaces.connect();
+                        mGasPlacesList.add(tmpGasPlaces);  // Add to the list for pre loading
+
+                        // * * Draw the charging stations
+                        new GMap.DrawChargePlacesTask().execute(tmpGasPlaces);
+
+                        // * * Make the API call and the the charging stations around the
+                        //     mid point
+                        tmpChargePlaces = new Places(
+                                Utility.latLngToLocation(tmpMidLatLng),
+                                CHARGE_ALONG_SEARCH_RANGE,  // Search range in meters
                                 Places.CHARGING_STATIONS,
                                 Utility.getDevKey()
                         );
-                        tmpPlaces.connect();
+                        tmpChargePlaces.connect();
+                        mChargePlacesList.add(tmpChargePlaces);  // Add to the list for pre loading
 
                         // * * Draw the charging stations
-                        new GMap.DrawChargePlacesTask().execute(tmpPlaces);
+                        new GMap.DrawGasPlacesTask().execute(tmpChargePlaces);
                     }
+                }
+            }
+        }).start();
+    }
+
+    /**
+     * Draw the charging stations along the entire route for the reset
+     */
+    public static void getStationsAlongTheRouteUsingPreloaded() {
+
+        // Check for nulls
+        if(mGasPlacesList == null) {
+            return;
+        }
+        if(mChargePlacesList == null) {
+            return;
+        }
+
+        // If multi directions object is not null then OK
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                // Iterate through the preloaded locations
+                Iterator<Places> gasIterator;
+                Iterator<Places> chargeIterator;
+                Places tmpGasPlaces;
+                Places tmpChargePlaces;
+
+                // * Gas stations
+                gasIterator = mGasPlacesList.iterator();
+                while(gasIterator.hasNext()) {
+                    tmpGasPlaces = gasIterator.next();
+                    new GMap.DrawChargePlacesTask().execute(tmpGasPlaces);
+                }
+
+                // * Charge stations
+                chargeIterator = mChargePlacesList.iterator();
+                while(chargeIterator.hasNext()) {
+                    tmpChargePlaces = chargeIterator.next();
+                    new GMap.DrawChargePlacesTask().execute(tmpChargePlaces);
                 }
             }
         }).start();
@@ -472,6 +597,8 @@ public class UserNavigation
      * @param trackingStatus
      */
     public static void directionsWhatToDoToast(Boolean trackingStatus, Long period) {
+
+        // Error handling
         if(trackingStatus == false) {
             return;
         }
@@ -537,26 +664,26 @@ public class UserNavigation
         new GMap.DrawMultiRouteTask().execute(mMultiDirections);
 
         // Get the nearby gas stations and draw
-        mGasPlaces = new Places(Car.mCurrentLocation,
-                Car.getPossibleRangeInMeters(),
-                Places.GAS_STATION,
-                Utility.getDevKey()
-        );
-        new GMap.DrawGasPlacesTask().execute(mGasPlaces);
+//        mGasPlaces = new Places(Car.mCurrentLocation,
+//                Car.getPossibleRangeInMeters(),
+//                Places.GAS_STATION,
+//                Utility.getDevKey()
+//        );
+//        new GMap.DrawGasPlacesTask().execute(mGasPlaces);
 
         // Get the nearby charging station and draw
-        mChargePlaces = new Places(Car.mCurrentLocation,
-                Car.getPossibleRangeInMeters(),
-                Places.CHARGE_POINT,
-                Utility.getDevKey()
-        );
-        new GMap.DrawChargePlacesTask().execute(mChargePlaces);
+//        mChargePlaces = new Places(Car.mCurrentLocation,
+//                Car.getPossibleRangeInMeters(),
+//                Places.CHARGE_POINT,
+//                Utility.getDevKey()
+//        );
+//        new GMap.DrawChargePlacesTask().execute(mChargePlaces);
 
         // Draw the car range
-        GMap.drawCarRange(
-                Utility.latLngFromLocation(Car.mCurrentLocation),
-                Car.getPossibleRangeInMeters(),
-                Color.GREEN
-        );
+//        GMap.drawCarRange(
+//                Utility.latLngFromLocation(Car.mCurrentLocation),
+//                Car.getPossibleRangeInMeters(),
+//                Color.GREEN
+//        );
     }
 }

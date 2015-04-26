@@ -11,6 +11,9 @@ public class Voice
 {
     public static TextToSpeech tts;
 
+    /**
+     * Text to speech engine setup
+     */
     public static void installTTS() {
         tts = new TextToSpeech(
                 Main.me.getApplication(),
@@ -18,13 +21,17 @@ public class Voice
                     @Override
                     public void onInit(int status) {
                         if(status != TextToSpeech.ERROR){
-                            tts.setLanguage(Locale.US);
+                            tts.setLanguage(Locale.UK);
                         }
                     }
                 }
         );
     }
 
+    /**
+     * Say a string message
+     * @param message
+     */
     public static void sayThis(String message) {
         tts.speak(message, TextToSpeech.QUEUE_FLUSH, null);
     }
