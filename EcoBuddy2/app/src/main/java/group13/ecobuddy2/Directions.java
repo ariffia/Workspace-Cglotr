@@ -350,7 +350,7 @@ public class Directions
                     Utility.latLngFromLocation(carLocation),
                     tmp.polylinePoints,
                     false,  // Geodesic stuff
-                    50.0  // Match radius in meters
+                    100.0  // Match radius in meters
             );
             if(in) {
                 returnCandidate = steps.get(i + 1);

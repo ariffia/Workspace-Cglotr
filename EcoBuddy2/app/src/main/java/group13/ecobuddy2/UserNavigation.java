@@ -542,7 +542,7 @@ public class UserNavigation
                 gasIterator = mGasPlacesList.iterator();
                 while(gasIterator.hasNext()) {
                     tmpGasPlaces = gasIterator.next();
-                    new GMap.DrawChargePlacesTask().execute(tmpGasPlaces);
+                    new GMap.DrawGasPlacesTask().execute(tmpGasPlaces);
                 }
 
                 // * Charge stations
